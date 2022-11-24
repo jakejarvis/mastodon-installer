@@ -21,6 +21,12 @@ read -p "What's your server's domain or subdomain (without \"http\" or \"https\"
 read -p "What's a good email address to use for server things? " MASTODON_ADMIN_EMAIL
 read -p "What would you like the server administrator's Mastodon username to be? " MASTODON_ADMIN_USERNAME
 
+# set FQDN (especially necessary for sendmail)
+echo -e "\n# Added by mastodon-installer @ $(date)
+127.0.0.1  localhost $MASTODON_DOMAIN
+::1  localhost $MASTODON_DOMAIN" | sudo tee -a /etc/hosts >/dev/null
+sudo hostnamectl set-hostname "$MASTODON_DOMAIN" || true
+
 # create non-root mastodon user
 sudo adduser --disabled-login --gecos "Mastodon" mastodon || true
 
@@ -135,12 +141,6 @@ sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "s/example.com
 sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "/ssl_certificate/s/^  #//"
 sudo ln -s "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" "/etc/nginx/sites-enabled/$MASTODON_DOMAIN.conf"
 sudo sed -i /etc/nginx/nginx.conf -e "s/user www-data;/user mastodon;/g"
-
-# set FQDN (especially necessary for sendmail)
-echo -e "\n# Added by mastodon-installer @ $(date)
-127.0.0.1  localhost $MASTODON_DOMAIN
-::1  localhost $MASTODON_DOMAIN" | sudo tee -a /etc/hosts >/dev/null
-sudo hostnamectl set-hostname "$MASTODON_DOMAIN" || true
 
 # enable systemd services on startup
 sudo cp "$MASTODON_ROOT"/live/dist/mastodon-*.service /etc/systemd/system/
