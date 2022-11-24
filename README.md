@@ -4,7 +4,7 @@
 
 ![Escape the Space Karen](https://user-images.githubusercontent.com/1703673/202923190-95424152-3eb5-45ed-86e7-0ae0c89f917c.JPG)
 
-Be your own boss and host your own [Mastodon](https://joinmastodon.org/) server on the fediverse!
+Be your own [hall monitor](https://twitter.com/elonmusk/status/1594757734267764774) and host your own [Mastodon](https://joinmastodon.org/) server on the fediverse!
 
 ## Requirements
 
@@ -12,16 +12,6 @@ Be your own boss and host your own [Mastodon](https://joinmastodon.org/) server 
 - A domain name (or subdomain) already pointing to your server's IP
 
 ## Usage
-
-### Creating a non-root user
-
-This script must be run as a **non-root user with sudo priviledges**. To create one called `mastodon` and switch to it, for example:
-
-```sh
-sudo adduser --gecos 'Mastodon' mastodon
-sudo usermod -aG sudo mastodon
-sudo su - mastodon
-```
 
 ### Running the script
 
@@ -44,6 +34,13 @@ chmod +x install.sh
 ```
 
 ### What's next?
+
+- [Create your admin account.](https://docs.joinmastodon.org/admin/setup/#admin)
+  - Visit your new instance in your browser (hopefully it's working — try restarting your server if not!) and register for a normal account. Then, run this command in your server's shell to elevate yourself to an administrator:
+
+```sh
+RAILS_ENV=production ~/live/bin/tootctl accounts modify YOUR_USERNAME_HERE --role Owner
+```
 
 - Review the many [config options](https://docs.joinmastodon.org/admin/config/) located in `/home/mastodon/live/.env.production`
 - Harden your server's security using:
