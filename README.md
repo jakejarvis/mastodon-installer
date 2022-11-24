@@ -35,13 +35,6 @@ chmod +x install.sh
 
 ### What's next?
 
-- [Create your admin account.](https://docs.joinmastodon.org/admin/setup/#admin)
-  - Visit your new instance in your browser (hopefully it's working — try restarting your server if not!) and register for a normal account. Then, run this command in your server's shell to elevate yourself to an administrator:
-
-```sh
-RAILS_ENV=production ~/live/bin/tootctl accounts modify YOUR_USERNAME_HERE --role Owner
-```
-
 - Review the many [config options](https://docs.joinmastodon.org/admin/config/) located in `/home/mastodon/live/.env.production`
 - Harden your server's security using:
   - [UFW](https://www.linode.com/docs/guides/configure-firewall-with-ufw/) or [iptables](https://docs.joinmastodon.org/admin/prerequisites/#install-a-firewall-and-only-allow-ssh-http-and-https-ports)
