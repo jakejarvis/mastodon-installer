@@ -46,7 +46,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
   bison build-essential libssl-dev libyaml-dev libreadline6-dev \
   zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev \
   nginx redis-server redis-tools postgresql postgresql-contrib \
-  certbot python3-certbot-nginx libidn11-dev libicu-dev libjemalloc-dev
+  certbot python3-certbot-nginx sendmail libidn11-dev libicu-dev libjemalloc-dev
 
 # setup yarn
 sudo npm install --global yarn
@@ -135,6 +135,12 @@ sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "s/example.com
 sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "/ssl_certificate/s/^  #//"
 sudo ln -s "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" "/etc/nginx/sites-enabled/$MASTODON_DOMAIN.conf"
 sudo sed -i /etc/nginx/nginx.conf -e "s/user www-data;/user mastodon;/g"
+
+# set FQDN (especially necessary for sendmail)
+echo -e "\n# Added by mastodon-installer @ $(date)
+127.0.0.1  localhost $MASTODON_DOMAIN
+::1  localhost $MASTODON_DOMAIN" | sudo tee -a /etc/hosts >/dev/null
+sudo hostnamectl set-hostname "$MASTODON_DOMAIN" || true
 
 # enable systemd services on startup
 sudo cp "$MASTODON_ROOT"/live/dist/mastodon-*.service /etc/systemd/system/
