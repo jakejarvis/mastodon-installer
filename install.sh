@@ -157,6 +157,12 @@ sudo -u mastodon RAILS_ENV=production "$RBENV_ROOT/shims/ruby" "$MASTODON_ROOT/l
   --role Owner \
   --confirmed
 
+# set cleanup tasks to run weekly
+# https://docs.joinmastodon.org/admin/setup/#cleanup
+echo "# Added by mastodon-installer @ $(date)
+@weekly mastodon RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl media remove
+@weekly mastodon RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl preview_cards remove" | sudo tee -a /etc/cron.d/mastodon >/dev/null
+
 echo "🎉 All done!"
 echo -e "\nSign in here as '$MASTODON_ADMIN_EMAIL' with the password above 👆:"
 echo "https://$MASTODON_DOMAIN/auth/sign_in"
