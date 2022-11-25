@@ -66,13 +66,15 @@ echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' | sudo tee -a "$MASTODON_ROOT/.b
 # clone mastodon & checkout latest version
 sudo -u mastodon git clone https://github.com/mastodon/mastodon.git "$MASTODON_ROOT/live" && cd "$MASTODON_ROOT/live"
 sudo -u mastodon git checkout "$(sudo -u mastodon git tag -l | grep -v 'rc[0-9]*$' | sort -V | tail -n 1)"
+sudo git config --global --add safe.directory "$MASTODON_ROOT/live" || true
 
 # permission fixes
 sudo chown -R mastodon:mastodon "$MASTODON_ROOT/live" "$RBENV_ROOT"
 
 # install ruby
-sudo -u mastodon RUBY_CONFIGURE_OPTS=--with-jemalloc "$RBENV_ROOT/bin/rbenv" install "$(cat $MASTODON_ROOT/live/.ruby-version)"
-sudo -u mastodon "$RBENV_ROOT/bin/rbenv" global "$(cat $MASTODON_ROOT/live/.ruby-version)"
+RUBY_VERSION="$(sudo -u mastodon cat $MASTODON_ROOT/live/.ruby-version)"
+sudo -u mastodon RUBY_CONFIGURE_OPTS=--with-jemalloc "$RBENV_ROOT/bin/rbenv" install "$RUBY_VERSION" || true
+sudo -u mastodon "$RBENV_ROOT/bin/rbenv" global "$RUBY_VERSION"
 
 # install npm and gem dependencies
 sudo -u mastodon "$RBENV_ROOT/shims/gem" install bundler --no-document
@@ -82,8 +84,8 @@ sudo -u mastodon "$RBENV_ROOT/shims/bundle" install --jobs "$(getconf _NPROCESSO
 sudo -u mastodon yarn set version classic
 sudo -u mastodon yarn install --pure-lockfile --network-timeout 100000
 
-# set up database w/ secure password
-DB_PASSWORD=$(openssl rand -base64 32)
+# set up database w/ random alphanumeric password
+DB_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c32; echo)
 echo "CREATE USER mastodon WITH PASSWORD '$DB_PASSWORD' CREATEDB" | sudo -u postgres psql -f -
 
 # populate .env.production config

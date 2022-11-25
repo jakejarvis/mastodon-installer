@@ -8,7 +8,7 @@ Be your own [hall monitor](https://twitter.com/elonmusk/status/15947577342677647
 
 ## Requirements
 
-- Ubuntu 20.04 LTS
+- Ubuntu 20.04 LTS (support for 22.04 is in the works!)
 - A domain name (or subdomain) already pointing to your server's IP
 
 ## Usage
