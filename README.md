@@ -9,7 +9,8 @@ Be your own [hall monitor](https://twitter.com/elonmusk/status/15947577342677647
 ## Requirements
 
 - Ubuntu 20.04 LTS (support for 22.04 is in the works!)
-- A domain name (or subdomain) already pointing to your server's IP
+- A server or [VPS](https://github.com/joedicastro/vps-comparison) (in the cloud, on your Raspberry Pi, anywhere!) with ***at least*** 2 GB of memory
+- A domain name (or subdomain) already pointing to this server's public IP address
 
 ## Usage
 
@@ -35,6 +36,7 @@ chmod +x install.sh
 
 ### What's next?
 
+- [Close new registrations](https://discourse.joinmastodon.org/t/how-to-close-registrations/2629/2) if you intend for this to be a single-user server.
 - Review the many [config options](https://docs.joinmastodon.org/admin/config/) located in `/home/mastodon/live/.env.production`
 - Harden your server's security using:
   - [UFW](https://www.linode.com/docs/guides/configure-firewall-with-ufw/) or [iptables](https://docs.joinmastodon.org/admin/prerequisites/#install-a-firewall-and-only-allow-ssh-http-and-https-ports)
