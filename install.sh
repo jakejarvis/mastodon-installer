@@ -34,25 +34,67 @@ sudo adduser --disabled-login --gecos "Mastodon" mastodon || true
 sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
 sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
-  curl wget gnupg apt-transport-https lsb-release ca-certificates
+  curl \
+  wget \
+  gnupg \
+  apt-transport-https \
+  lsb-release \
+  ca-certificates
 
-# add node apt repository
-curl -sL https://deb.nodesource.com/setup_16.x | sudo bash -
+# add nodesource apt repository
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/nodesource-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/nodesource-archive-keyring.gpg] https://deb.nodesource.com/node_16.x $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/nodesource.list >/dev/null
 
-# add postgres apt repository
-sudo wget -O /usr/share/keyrings/postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
-echo "deb [signed-by=/usr/share/keyrings/postgresql.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list
+# add official postgresql apt repository
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/postgresql.list >/dev/null
+
+# add official redis apt repository
+curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list >/dev/null
+
+# add official nginx apt repository
+curl -fsSL https://nginx.org/keys/nginx_signing.key | sudo gpg --dearmor -o /usr/share/keyrings/nginx-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/ubuntu/ $(lsb_release -cs) nginx" | sudo tee /etc/apt/sources.list.d/nginx.list >/dev/null
 
 # install prerequisites:
 # https://docs.joinmastodon.org/admin/install/#system-packages
 sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
-  imagemagick ffmpeg libpq-dev libxml2-dev libxslt1-dev file git-core \
-  g++ libprotobuf-dev protobuf-compiler pkg-config nodejs gcc autoconf \
-  bison build-essential libssl-dev libyaml-dev libreadline6-dev \
-  zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev \
-  nginx redis-server redis-tools postgresql postgresql-contrib \
-  certbot python3-certbot-nginx sendmail libidn11-dev libicu-dev libjemalloc-dev
+  git-core \
+  g++ \
+  libpq-dev \
+  libxml2-dev \
+  libxslt1-dev \
+  imagemagick \
+  nodejs \
+  redis-server \
+  redis-tools \
+  postgresql \
+  postgresql-contrib \
+  libidn11-dev \
+  libicu-dev \
+  libreadline6-dev \
+  autoconf \
+  bison \
+  build-essential \
+  ffmpeg \
+  file \
+  gcc \
+  libffi-dev \
+  libgdbm-dev \
+  libjemalloc-dev \
+  libncurses5-dev \
+  libprotobuf-dev \
+  libssl-dev \
+  libyaml-dev \
+  pkg-config \
+  protobuf-compiler \
+  zlib1g-dev \
+  sendmail \
+  nginx \
+  certbot \
+  python3-certbot-nginx \
 
 # setup yarn
 sudo npm install --global yarn
@@ -66,7 +108,7 @@ echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' | sudo tee -a "$MASTODON_ROOT/.b
 # clone mastodon & checkout latest version
 sudo -u mastodon git clone https://github.com/mastodon/mastodon.git "$MASTODON_ROOT/live" && cd "$MASTODON_ROOT/live"
 sudo -u mastodon git checkout "$(sudo -u mastodon git tag -l | grep -v 'rc[0-9]*$' | sort -V | tail -n 1)"
-sudo git config --global --add safe.directory "$MASTODON_ROOT/live" || true
+sudo git config --global --add safe.directory "$MASTODON_ROOT/live"
 
 # permission fixes
 sudo chown -R mastodon:mastodon "$MASTODON_ROOT/live" "$RBENV_ROOT"
@@ -143,14 +185,14 @@ sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "s/example.com
 sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "/ssl_certificate/s/^  #//"
 sudo ln -s "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" "/etc/nginx/sites-enabled/$MASTODON_DOMAIN.conf"
 sudo sed -i /etc/nginx/nginx.conf -e "s/user www-data;/user mastodon;/g"
+sudo systemctl restart nginx
 
-# enable systemd services on startup
+# configure mastodon systemd services
 sudo cp "$MASTODON_ROOT"/live/dist/mastodon-*.service /etc/systemd/system/
 
 # start everything up!
 sudo systemctl daemon-reload
 sudo systemctl enable --now mastodon-web mastodon-sidekiq mastodon-streaming
-sudo systemctl restart nginx
 
 # create admin account
 sudo -u mastodon RAILS_ENV=production "$RBENV_ROOT/shims/ruby" "$MASTODON_ROOT/live/bin/tootctl" accounts create \
@@ -161,9 +203,10 @@ sudo -u mastodon RAILS_ENV=production "$RBENV_ROOT/shims/ruby" "$MASTODON_ROOT/l
 
 # set cleanup tasks to run weekly
 # https://docs.joinmastodon.org/admin/setup/#cleanup
-echo "# Added by mastodon-installer @ $(date)
-@weekly mastodon RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl media remove
-@weekly mastodon RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl preview_cards remove" | sudo tee -a /etc/cron.d/mastodon >/dev/null
+(sudo crontab -l; echo -e "\n# Added by mastodon-installer @ $(date)
+@weekly  mastodon  RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl media remove
+@weekly  mastodon  RAILS_ENV=production $RBENV_ROOT/shims/ruby $MASTODON_ROOT/live/bin/tootctl preview_cards remove
+") | sudo crontab -
 
 echo "🎉 All done!"
 echo -e "\nSign in here as '$MASTODON_ADMIN_EMAIL' with the password above 👆:"

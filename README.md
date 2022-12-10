@@ -40,15 +40,20 @@ chmod +x install.sh
 - Review the many [config options](https://docs.joinmastodon.org/admin/config/) located in `/home/mastodon/live/.env.production`
 - Harden your server's security using:
   - [UFW](https://www.linode.com/docs/guides/configure-firewall-with-ufw/) or [iptables](https://docs.joinmastodon.org/admin/prerequisites/#install-a-firewall-and-only-allow-ssh-http-and-https-ports)
-  - [Fail2ban](https://docs.joinmastodon.org/admin/prerequisites/#install-fail2ban-so-it-blocks-repeated-login-attempts)
+  - [Fail2ban](https://docs.joinmastodon.org/admin/prerequisites/#install-fail2ban-so-it-blocks-repeated-login-attempts) if you _really_ need to keep SSH open to the world.
+- [Offload media files to Amazon S3](https://docs.joinmastodon.org/admin/optional/object-storage-proxy/). They **will** eat a ton of disk space, even on a single-user server! You can also use an S3-compatible cloud storage product, such as:
+  - [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces)
+  - [Linode Object Storage](https://www.linode.com/products/object-storage/)
+  - [Wasabi](https://wasabi.com/cloud-storage-pricing/)
 - Configure an email provider:
   - [Mailgun](https://www.mailgun.com/products/send/smtp/free-smtp-service/) and [SendGrid](https://sendgrid.com/free/) have a free tier
   - ...but any regular SMTP server will work.
-- [Offload media files to Amazon S3](https://docs.joinmastodon.org/admin/optional/object-storage-proxy/). They **will** eat a ton of disk space, even on a single-user server!
 - Tune [Sidekiq & Puma](https://docs.joinmastodon.org/admin/scaling/#concurrency) for performance and consider using [pgBouncer](https://docs.joinmastodon.org/admin/scaling/#pgbouncer).
   - [Official scaling docs](https://docs.joinmastodon.org/admin/scaling/)
+  - [Scaling Mastodon: The Compendium](https://hazelweakly.me/blog/scaling-mastodon/)
+  - [Scaling up a Mastodon server to 128K active users](https://gist.github.com/Gargron/aa9341a49dc91d5a721019d9e0c9fd11)
   - [Scaling Mastodon _down_](https://gist.github.com/nolanlawson/fc027de03a7cc0b674dcdc655eb5f2cb)
-  - [PGTune](https://pgtune.leopard.in.ua/#/)
+  - Advanced: [Installing & Monitoring Mastodon](https://ipng.ch/s/articles/2022/11/20/mastodon-1.html) ([Part 2](https://ipng.ch/s/articles/2022/11/24/mastodon-2.html), [Part 3](https://ipng.ch/s/articles/2022/11/27/mastodon-3.html))
 
 ## Software installed
 
