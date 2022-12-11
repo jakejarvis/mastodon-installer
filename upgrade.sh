@@ -20,8 +20,16 @@ sudo DEBIAN_FRONTEND=noninteractive apt upgrade -y
 
 # pull latest mastodon source
 cd "$MASTODON_ROOT/live"
-sudo -u mastodon git fetch --tags
-sudo -u mastodon git checkout "$(sudo -u mastodon git tag -l | grep -v 'rc[0-9]*$' | sort -V | tail -n 1)"
+sudo -u mastodon git fetch --all
+sudo -u mastodon git stash push --message "pre-upgrade changes" || true
+if [ -d "$MASTODON_ROOT/live/app/javascript/flavours/glitch" ]; then
+  # glitch-soc (uses latest commits)
+  echo "glitch-soc detected, applying latest commits from there instead..."
+  sudo -u mastodon git checkout glitch-soc/main
+else
+  # vanilla Mastodon (uses latest release)
+  sudo -u mastodon git checkout "$(sudo -u mastodon git tag -l | grep -v 'rc[0-9]*$' | sort -V | tail -n 1)"
+fi
 
 # set new ruby version
 RUBY_VERSION="$(sudo -u mastodon cat $MASTODON_ROOT/live/.ruby-version)"
