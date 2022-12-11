@@ -93,8 +93,9 @@ sudo DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
   zlib1g-dev \
   sendmail \
   nginx \
-  certbot \
-  python3-certbot-nginx \
+  python3 \
+  python3-venv \
+  libaugeas0
 
 # setup yarn
 sudo npm install --global yarn
@@ -176,15 +177,29 @@ sudo -u mastodon RAILS_ENV=production "$RBENV_ROOT/shims/bundle" exec rails db:s
 # manually precompile assets
 sudo -u mastodon RAILS_ENV=production "$RBENV_ROOT/shims/bundle" exec rails assets:precompile
 
+# install latest certbot
+# https://certbot.eff.org/instructions?ws=nginx&os=pip
+sudo python3 -m venv /opt/certbot/
+sudo /opt/certbot/bin/pip install --upgrade pip
+sudo /opt/certbot/bin/pip install certbot certbot-nginx
+sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+
 # order an ssl certificate from LE
-sudo certbot certonly --nginx -d "$MASTODON_DOMAIN" -m "$MASTODON_ADMIN_EMAIL"
+sudo certbot certonly \
+  --non-interactive \
+  --agree-tos \
+  --no-eff-email \
+  --email "$MASTODON_ADMIN_EMAIL" \
+  --domains "$MASTODON_DOMAIN" \
+  --nginx
 
 # configure nginx
+sudo sed -i /etc/nginx/nginx.conf -e "s/user www-data;/user mastodon;/g"
 sudo cp "$MASTODON_ROOT/live/dist/nginx.conf" "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf"
 sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "s/example.com/$MASTODON_DOMAIN/g"
 sudo sed -i "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" -e "/ssl_certificate/s/^  #//"
 sudo ln -s "/etc/nginx/sites-available/$MASTODON_DOMAIN.conf" "/etc/nginx/sites-enabled/$MASTODON_DOMAIN.conf"
-sudo sed -i /etc/nginx/nginx.conf -e "s/user www-data;/user mastodon;/g"
+sudo rm /etc/nginx/sites-enabled/default
 sudo systemctl restart nginx
 
 # configure mastodon systemd services
